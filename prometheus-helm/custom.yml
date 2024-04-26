@@ -1,0 +1,36 @@
+server:
+  extraFlags:
+    - web.enable-admin-api
+
+  persistentVolume:
+    enabled: false
+
+  resources:
+    limits:
+      cpu: 1
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  extraArgs:
+    'storage.tsdb.retention.size': 500MB
+
+  service:
+    type: NodePort
+    nodePort: 30388
+
+  retention: "1h"
+
+  nodeSelector:
+    app: ingress
+  tolerations:
+    - key: "node-role.kubernetes.io/control-plane"
+      operator: "Equal"
+      effect: "NoSchedule"
+
+alertmanager:
+  enabled: false
+
+
+prometheus-pushgateway:
+  enabled: false
