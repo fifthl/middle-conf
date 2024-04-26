@@ -1,0 +1,10 @@
+# file name /var/lib/kubelet/config.yaml
+# kubelet 配置为系统预留资源，添加如下配置
+kubeReserved:
+  cpu: 500m
+  memory: 1Gi
+systemReserved:
+  memory: 1Gi
+evictionHard:
+  memory.available: "500Mi"
+  nodefs.available: "10%"

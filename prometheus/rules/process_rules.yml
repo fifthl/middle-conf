@@ -1,0 +1,32 @@
+# MAINTAINER  张钦博
+
+groups:
+- name: 系统进程
+  rules:
+
+  - alert: 进程数量异常
+    expr: namedprocess_namegroup_num_procs == 0
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      summary: "{{ $labels.instance }} 进程数量为 0 , 已持续三分钟 ( 异常进程: {{ $labels.groupname }} )"
+
+
+
+  - alert: 存在僵尸进程
+    expr: (sum(namedprocess_namegroup_states{ state="Other"}) by (groupname,instance)) >= 10
+    for: 3m
+    labels:
+      severity: warning
+    annotations:
+      summary: "{{ $labels.instance }} 存在僵尸进程 , 已持续三分钟 ( 异常进程: {{ $labels.groupname }} )"
+
+
+  - alert: 进程打开文件描述符过多
+    expr: namedprocess_namegroup_open_filedesc >= 500
+    for: 10m
+    labels:
+      severity: warning
+    annotations:
+      summary: "{{ $labels.groupname }} 打开的系统文件描述符过多 , 已持续十分钟 ( 当前值: {{ humanize $value }} )"

@@ -1,0 +1,114 @@
+# MAINTAINER  张钦博
+groups:
+- name: Pod
+
+  rules:
+  - alert: Pod 运行状态异常
+    expr: sum (kube_pod_status_phase{phase!~"Running|Succeeded"}) without (job,uid,instance) == 1
+    for: 3m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.pod }} 状态异常 , 当前状态 {{ $labels.phase }}"
+
+
+  - alert: Pod 重启次数异常
+    expr: sum (increase(kube_pod_container_status_restarts_total{container!~"prometheus-server-configmap-reload"}[2m])) without (job) > 0
+    for: 1m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.container }} 2 分钟内频繁重启 , 当前重启次数 {{ humanize $value }}"
+
+  - alert: Pod 启动状态异常
+    expr: sum by (namespace, pod, container,cluster) (kube_pod_container_status_waiting_reason) >= 1
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.container }}  当前处于 {{ $labels.reason }}"
+
+  - alert: Deployment 部署版本不匹配
+    expr: sum by (namespace, pod, container,cluster) (kube_pod_container_status_waiting_reason) >= 1
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 Deployment-{{ $labels.deployment }} 版本与当前运行的 Deployment-{{ $labels.deployment }} 版本不一致 "
+
+  - alert: Deployment 副本数不匹配
+    expr: ( kube_deployment_spec_replicas{job="state-metrics"} != kube_deployment_status_replicas_available{job="state-metrics"} ) and ( changes(kube_deployment_status_replicas_updated{job="state-metrics"}[5m]) == 0 )
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.deployment }} 副本数不匹配，当前副本为 {{ $value }} "
+
+  - alert: Statefulset  部署版本不匹配
+    expr: kube_statefulset_status_observed_generation{job=~"state-metrics"} != kube_statefulset_metadata_generation{job=~"state-metrics"}
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.statefulset }} 副本数不匹配，当前副本为 {{ $value }} "
+
+  - alert: Statefulset 副本数不匹配
+    expr: (kube_statefulset_status_replicas_ready{job=~"state-metrics"} != kube_statefulset_status_replicas{job=~"state-metrics"}) and ( changes(kube_statefulset_status_replicas_updated{job=~"state-metrics"}[5m]) == 0)
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.statefulset }} 副本数不匹配，当前副本为 {{ $value }} "
+
+  - alert: Daemonset 部分滚动更新失败
+    expr: ((kube_daemonset_status_current_number_scheduled!=kube_daemonset_status_desired_number_scheduled) or (kube_daemonset_status_number_misscheduled!=0) or (kube_daemonset_updated_number_scheduled!=kube_daemonset_status_desired_number_scheduled) or (kube_daemonset_status_number_available!=kube_daemonset_status_desired_number_scheduled)) and (changes(kube_daemonset_updated_number_scheduled[5m])==0)
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.daemonset }} 部分pod未完成滚动更新"
+
+
+  - alert: Deployment 副本数为 0
+    expr: kube_deployment_status_replicas == 0
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.deployment }} 当前副本数为 0"
+
+  - alert: Daemonset 副本数为 0
+    expr: kube_daemonset_status_number_available == 0 
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.daemonset }} 当前副本数为 0"
+
+  - alert: endpoint 未准备好
+    expr: kube_endpoint_address_not_ready  == 1
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.namespace }} 空间下 {{ $labels.endpoint }} 未就绪"
+
+  - alert: namespace 状态异常
+    expr: kube_namespace_status_phase{phase="Active"} == 0
+    for: 5m
+    labels:
+      severity: warning
+      from: pod
+    annotations:
+      summary: "{{ $labels.cluster }} 集群下 {{ $labels.namespace }}状态异常，当前状态为 {{ $labels.phase }}"

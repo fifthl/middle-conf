@@ -1,0 +1,13 @@
+[Unit]
+Description=etcd0
+Documentation=https://github.com/etcd-io/etcd
+
+[Service]
+Type=notify
+ExecStart=/bin/etcd --config-file=/etc/etcd/etcd0.yaml
+Restart=always
+RestartSec=5s
+LimitNOFILE=400000
+
+[Install]
+WantedBy=multi-user.target

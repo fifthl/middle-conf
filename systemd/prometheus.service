@@ -1,0 +1,15 @@
+[Unit]
+Description=Prometheus
+Documentation=https://prometheus.io/
+After=network.target
+
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/promtool check config /etc/prometheus/prometheus.yml
+ExecStart=/usr/bin/prometheus --config.file=/etc/prometheus/prometheus.yml --web.enable-lifecycle --storage.tsdb.path=/data/prometheus --web.enable-admin-api
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+

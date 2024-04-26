@@ -1,0 +1,17 @@
+#!/usr/bin/python3
+
+# -*- coding: utf-8 -*-
+import re
+import sys
+
+from gunicorn.app.wsgiapp import run
+# 添加上 app 放置的路径
+sys.path[0]='/usr/local/app'
+
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw?|\.exe)?$', '', sys.argv[0])
+    sys.exit(run())
+
+
+# ModuleNotFoundError: No module named 'gunicorn'
+# 使用 pip3 isntall gunicorn 安装然解决

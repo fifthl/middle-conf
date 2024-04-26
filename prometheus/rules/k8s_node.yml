@@ -1,0 +1,31 @@
+# MAINTAINER  张钦博
+groups:
+- name: k8sNode
+
+  rules:
+  - alert: K8s Node 状态异常
+    expr: kube_node_status_condition{job="kubernetes-service-endpoints",condition="Ready",status="true"} == 0
+    for: 15m
+    labels:
+      severity: warning
+      from: k8s
+    annotations:
+      summary: "{{ $labels.cluster }} Node 状态异常持续15m "
+
+  - alert: K8s Node 不稳定
+    expr: sum(changes(kube_node_status_condition{status="true",condition="Ready"}[15m])) by (node,cluster) >=2
+    for: 15m
+    labels:
+      severity: warning
+      from: k8s
+    annotations:
+      summary: "{{ $labels.node }}状态在 Not Ready 与 Ready 之间抖动"
+
+  - alert: Node 不允许调度
+    expr: kube_node_spec_taint{effect="NoSchedule",node!~"master.*"} == 1
+    for: 5m
+    labels:
+      severity: warning
+      from: k8s
+    annotations:
+      summary: "{{ $labels.node }}状态异常，当前状态为 NoSchedule"

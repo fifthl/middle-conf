@@ -1,0 +1,29 @@
+# 共三个 etcd 配置文件，这里作为记录所以写到一块了，后续需要分开
+name: etcd0
+data-dir: /data/etcd/etcd0
+listen-client-urls: http://10.33.12.209:2379,http://127.0.0.1:2379
+listen-peer-urls: http://10.33.12.209:2380
+initial-advertise-peer-urls: http://10.33.12.209:2380
+initial-cluster: etcd0=http://10.33.12.209:2380,etcd1=http://10.33.12.209:3380,etcd2=http://10.33.12.209:4380
+initial-cluster-state: new
+initial-cluster-token: etcd-cluster
+advertise-client-urls: http://10.33.12.209:2379
+------------------------------------------------------------------
+name: etcd1
+data-dir: /data/etcd/etcd1
+listen-client-urls: http://10.33.12.209:3379,http://127.0.0.1:3379
+listen-peer-urls: http://10.33.12.209:3380
+initial-advertise-peer-urls: http://10.33.12.209:3380
+initial-cluster: etcd0=http://10.33.12.209:2380,etcd1=http://10.33.12.209:3380,etcd2=http://10.33.12.209:4380
+initial-cluster-state: new
+initial-cluster-token: etcd-cluster
+advertise-client-urls: http://10.33.12.209:3379
+------------------------------------------------------------------name: etcd2
+data-dir: /data/etcd/etcd2
+listen-client-urls: http://10.33.12.209:4379,http://127.0.0.1:4379
+listen-peer-urls: http://10.33.12.209:4380
+initial-advertise-peer-urls: http://10.33.12.209:4380
+initial-cluster: etcd0=http://10.33.12.209:2380,etcd1=http://10.33.12.209:3380,etcd2=http://10.33.12.209:4380
+initial-cluster-state: new
+initial-cluster-token: etcd-cluster
+advertise-client-urls: http://10.33.12.209:4379

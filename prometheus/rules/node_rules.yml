@@ -1,0 +1,80 @@
+# MAINTAINER  张钦博
+
+groups:
+- name: Node 资源使用
+  rules:
+
+  
+  - alert: Node CPU 使用率高
+    expr: (100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) by(instance) * 100)) >= 90
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }} CPU使用率过高, 已持续三分钟 ( 当前值: {{ humanize $value }} )"
+
+  - alert: Node 内存使用率高
+    expr: ((node_memory_MemTotal_bytes - (node_memory_MemFree_bytes + node_memory_Cached_bytes + node_memory_Buffers_bytes)) /  node_memory_MemTotal_bytes) * 100 >= 90
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }} 内存使用率过高, 已持续三分钟 ( 当前值为 {{ humanize $value }} )"
+
+  - alert: Node 磁盘使用率高
+    expr: ((node_filesystem_size_bytes {mountpoint ="/"} - node_filesystem_free_bytes {mountpoint ="/"}) / node_filesystem_size_bytes {mountpoint ="/"} * 100) >= 93
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }} 磁盘使用率过高, 请及时关注 ( 当前值为 {{ humanize $value }} )"
+
+  - alert: Node 网卡接收流量异常
+    expr: (irate(node_network_receive_bytes_total{device!~ "lo|qb.*|qv.*|tap.*|veth.*|flannel.*" }[5m])/1024/1024) >= 150
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }}-{{ $labels.device }} 接收流量异常, 请及时关注 ( 当前值为 {{ humanize $value }} )"
+
+  - alert: Node 网卡流出流量异常
+    expr: (irate(node_network_transmit_bytes_total{device!~ "lo|qb.*|qv.*|tap.*|veth.*|flannel.*" }[5m])/1024/1024) >= 150
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }}-{{ $labels.device }} 流出流量异常, 请及时关注 ( 当前值为 {{ humanize $value }} )"
+
+  - alert: Node 网卡接收到错误数据包数量异常
+    expr: (irate(node_network_receive_errs_total{device="eth0"}[5m])) >= 10
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }}-{{ $labels.device }} 接收到错误数据宝数量异常, 请及时关注 ( 当前值为 {{ humanize $value }} )"
+
+
+  - alert: Node 网卡状态异常
+    expr: node_network_up{device="eth0"} == 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }} 可能未启用"
+
+
+  - alert: Node 文件系统 read-only 状态
+    expr: node_filesystem_readonly{ mountpoint="/"} == 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Instance {{ $labels.instance }} 文件系统只读状态"
+
+  - alert: ECS 状态异常
+    expr: up{job!~"cadvisor|kube-state-metrics"} == 0
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "主机 {{ $labels.instance }} down "
