@@ -1,0 +1,14 @@
+- targets:
+  - https://dpf.voglassdc.com/#/login
+  - https://dpw.voglassdc.com/
+  - https://dpwb.voglassdc.com/
+  - https://hkapi.voglassdc.com/
+  - https://hkapi.voglassdc.com/pro/
+  - https://git.sczsdc.com/
+  - https://harbor.sczsdc.com/
+  - https://bpm.shangceng.com.cn/bpm/
+  - https://ddsq.voglassdc.com/#/
+  - https://sign.voglassdc.com/
+  - https://dpw2.voglassdc.com/#/login
+  labels:
+    group: 'page'

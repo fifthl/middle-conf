@@ -1,0 +1,18 @@
+[Unit]
+Description=VictoriaMetrics
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+PIDFile=/run/victoriametrics/vmstorage.pid
+ExecStart=/usr/bin/vmstorage -retentionPeriod=15d -storageDataPath=/data/vm/ -httpListenAddr=10.33.12.20:8482 -vminsertAddr=10.33.12.20:8400 -vmselectAddr=10.33.12.20:8401 -dedup.minScrapeInterval=30s
+ExecStop=/bin/kill -s SIGTERM $MAINPID
+
+[Install]
+WantedBy=multi-user.target
+
+
+[Service]
+LimitNOFILE=32000
+LimitNPROC=32000

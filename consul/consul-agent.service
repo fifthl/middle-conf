@@ -1,0 +1,19 @@
+[Unit]
+Description="HashiCorp Consul - Consul Agent"
+Documentation=https://www.consul.io/
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=-/etc/consul.d/consul.env
+User=consul
+Group=consul
+ExecStart=/usr/bin/consul agent -dns-port=8303 -grpc-port=8304 -http-port=8305 -serf-lan-port=8306 -serf-wan-port=8307 -server-port=8308 -bind=10.33.12.20  -config-file=/etc/consul.d/client.json
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillMode=process
+KillSignal=SIGTERM
+Restart=on-failure
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

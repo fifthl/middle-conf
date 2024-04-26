@@ -1,0 +1,241 @@
+# MAINTAINER  张钦博
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+
+
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets:
+#           - 127.0.0.1:9093
+
+# rule_files:
+#   - rules/*yml
+
+remote_write:
+  - url: http://10.33.12.209:9090/insert/2697763333/prometheus
+    queue_config:
+      max_samples_per_send: 10000
+      max_shards: 3
+
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: 'net-federate'
+    honor_labels: true
+    metrics_path: '/federate'
+    params:
+      'match[]':
+        - '{job="state-metrics"}'
+        - '{job="kubernetes-apiservers"}'
+        - '{job="kubernetes-nodes"}'
+        - '{job="kubernetes-service-endpoints"}'
+        - '{job="kubernetes-services"}'
+        - '{job="kubernetes-pods"}'
+        - '{job="kubernetes-nodes-cadvisor"}'
+    static_configs:
+      - targets: ["10.22.12.17:30008"]
+    metric_relabel_configs:
+      - source_labels: [namespace]
+        regex: (cattle-.+|default|local|test|dev|default|calico-system)
+        action: drop
+
+  - job_name: 'butler-federate'
+    honor_labels: true
+    metrics_path: '/federate'
+    params:
+      'match[]':
+        - '{job="state-metrics"}'
+        - '{job="kubernetes-apiservers"}'
+        - '{job="kubernetes-nodes"}'
+        - '{job="kubernetes-service-endpoints"}'
+        - '{job="kubernetes-services"}'
+        - '{job="kubernetes-pods"}'
+        - '{job="kubernetes-nodes-cadvisor"}'
+    static_configs:
+      - targets: ["10.33.13.12:20800"]
+    metric_relabel_configs:
+      - source_labels: [namespace]
+        regex: (cattle-.+|default|local|test|pre|dev|default|calico-system)
+        action: drop
+
+  - job_name: butler_host
+    consul_sd_configs:
+      - server: '10.33.66.7:8500'
+        services:
+        - Exporter
+    relabel_configs:
+    - source_labels: [__meta_consul_service_address]
+      target_label: instances
+      regex: (.+)
+      action: replace
+    - source_labels: [__meta_consul_service_port]
+      target_label: port
+      regex: (.+)
+      action: replace
+    - source_labels: [__meta_consul_service_metadata_business]
+      target_label: business
+      regex: (.+)
+      action: replace
+    - source_labels: [__meta_consul_service_metadata_sys]
+      target_label: sys
+      regex: (.+)
+      action: replace
+    metric_relabel_configs:
+      - source_labels: [groupname]
+        regex: (([a-z].+-[a-z].+)(\s\W+\d.+)|(nginx)(.+)|(postgres)(.+))
+        target_label: groupname
+        replacement: $1
+        action: replace
+
+
+  - job_name: 'butler_mysql'
+    consul_sd_configs:
+      - server: '10.33.66.7:8500'
+        services:
+        - butler-MysqlExporter
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.33.12.20:9104
+
+
+  - job_name: 'butler_redis'
+    consul_sd_configs:
+      - server: '10.33.66.7:8500'
+        services:
+        - butler-RedisExporter
+    metrics_path: /scrape
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.33.12.20:9121
+
+
+  - job_name: 'butler_es'
+    static_configs:
+      - targets: ["10.33.12.20:9114"]
+
+  - job_name: 'butler_kafka'
+    static_configs:
+      - targets: ["10.33.12.20:9308"]
+
+
+# net
+  - job_name: net_host
+    consul_sd_configs:
+      - server: '10.33.66.7:8500'
+        services:
+        - NetExporter
+    relabel_configs:
+    - source_labels: [__meta_consul_service_address]
+      target_label: instances
+      regex: (.+)
+      action: replace
+    - source_labels: [__meta_consul_service_port]
+      target_label: port
+      regex: (.+)
+      action: replace
+    - source_labels: [__meta_consul_service_metadata_business]
+      target_label: business
+      regex: (.+)
+      action: replace
+    - source_labels: [__meta_consul_service_metadata_sys]
+      target_label: sys
+      regex: (.+)
+      action: replace
+
+
+  - job_name: 'net_mysql'
+    consul_sd_configs:
+      - server: '10.33.66.7:8500'
+        services:
+        - net-MysqlExporter
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.33.12.20:9104
+
+
+  - job_name: 'net_redis'
+    consul_sd_configs:
+      - server: '10.33.66.7:8500'
+        services:
+        - net-RedisExporter
+    metrics_path: /scrape
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 10.33.12.20:9121
+
+
+  - job_name: 'net_es'
+    static_configs:
+      - targets: ["10.22.12.20:9114"]
+
+
+  - job_name: 'net_kafka'
+    static_configs:
+      - targets: ["10.22.12.20:9308"]
+
+
+
+  - job_name: "blackbox"
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    tls_config:
+      insecure_skip_verify: true
+    file_sd_configs:
+    - refresh_interval: 30s
+      files:
+      - "/etc/blackbox/http.yaml"
+    relabel_configs:
+    - source_labels: [__address__]
+      target_label: __param_target
+    - source_labels: [__param_target]
+      target_label: instance
+    - target_label: __address__
+      replacement: 10.33.12.20:9115
+
+
+  - job_name: "ping"
+    metrics_path: /probe
+    params:
+      module: [icmp]
+    file_sd_configs:
+    - refresh_interval: 30s
+      files:
+      - "/etc/blackbox/icmp.yaml"
+    relabel_configs:
+    - source_labels: [__address__]
+      regex: (.*)(:80)?
+      target_label: __param_target
+      replacement: ${1}
+    - source_labels: [__param_target]
+      target_label: instance
+    - source_labels: [__param_target]
+      regex: (.*)
+      target_label: ping
+      replacement: ${1}
+    - source_labels: []
+      regex: .*
+      target_label: __address__
+      replacement: 10.33.12.20:9115

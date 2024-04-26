@@ -1,0 +1,18 @@
+[Unit]
+Description=VictoriaMetrics VmSelect
+After=network.target
+
+[Service]
+Type=simple
+Restart=on-failure
+PIDFile=/run/victoriametrics/vmselect.pid
+ExecStart=/usr/bin/vmselect -dedup.minScrapeInterval=30s -replicationFactor=2 -storageNode=10.33.12.20,10.33.12.209 -httpListenAddr=10.33.12.20:8481
+ExecStop=/bin/kill -s SIGTERM $MAINPID
+
+[Install]
+WantedBy=multi-user.target
+
+
+[Service]
+LimitNOFILE=32000
+LimitNPROC=32000
